@@ -3,8 +3,14 @@ import { getSupabaseServerClient } from '@/lib/supabase';
 import { rejectRequest } from '@/lib/auth';
 
 // POST /api/admin/requests/[id]/reject
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> | { id: string } }
+) {
   try {
+    const params = await Promise.resolve(context.params);
+    const id = params.id;
+
     const supabase = await getSupabaseServerClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -19,7 +25,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ success: false, error: 'Forbidden.' }, { status: 403 });
     }
 
-    const { id } = await params;
     const body = await request.json().catch(() => ({}));
     const result = await rejectRequest(id, body.reason);
 

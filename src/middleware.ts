@@ -14,9 +14,11 @@ const HR_ROUTES = ['/hr'];
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // ── 1. Allow public routes through immediately ──────────────
+  // ── 1. Allow public routes & API routes through immediately ─────
+  // (API routes enforce their own authentication and authorization checks)
   const isPublic = PUBLIC_ROUTES.some((r) => pathname.startsWith(r));
-  if (isPublic) return NextResponse.next();
+  const isApiRoute = pathname.startsWith('/api/');
+  if (isPublic || isApiRoute) return NextResponse.next();
 
   // ── 2. Set up a response we can mutate (for cookie refresh) ─
   let response = NextResponse.next({ request });

@@ -18,9 +18,9 @@ interface HR {
 
 interface HRTableProps {
   hrs: HR[];
-  onToggleActive: (id: string) => void;
+  onToggleActive: (id: string, name: string, is_active: boolean) => void;
   onResetPassword: (id: string, name: string) => void;
-  onDelete?: (id: string) => void;
+  onDelete?: (id: string, name: string) => void;
 }
 
 export function HRTable({ hrs, onToggleActive, onResetPassword, onDelete }: HRTableProps) {
@@ -101,9 +101,9 @@ export function HRTable({ hrs, onToggleActive, onResetPassword, onDelete }: HRTa
                   <td className="px-4 py-3 text-sm text-gray-600">{hr.phone || '—'}</td>
                   <td className="px-4 py-3">
                     <button
-                      onClick={() => onToggleActive(hr.id)}
+                      onClick={() => onToggleActive(hr.id, hr.full_name, hr.is_active)}
                       className={cn(
-                        'inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium transition-all',
+                        'inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer',
                         hr.is_active
                           ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                           : 'bg-red-50 text-red-600 hover:bg-red-100'
@@ -136,10 +136,10 @@ export function HRTable({ hrs, onToggleActive, onResetPassword, onDelete }: HRTa
                       </button>
                       {onDelete && (
                         <button
-                          onClick={() => onDelete(hr.id)}
+                          onClick={() => onDelete(hr.id, hr.full_name)}
                           className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          aria-label={`Deactivate ${hr.full_name}`}
-                          title="Deactivate account"
+                          aria-label={`Delete ${hr.full_name}`}
+                          title="Delete account"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

@@ -39,17 +39,15 @@ export function SignInForm({ onRequestAccess }: SignInFormProps) {
       const result = await signIn({ username: username.trim(), password });
 
       if (result.success && result.data) {
-        // Refresh AuthContext with the signed-in user's profile
-        await refreshUser();
-        // Brief delay to show success state
-        await new Promise((r) => setTimeout(r, 500));
+        // Trigger background refresh of AuthContext while navigating immediately
+        refreshUser();
         router.push(result.data.redirect);
       } else {
         setError(result.error || 'Invalid username or password.');
+        setIsLoading(false);
       }
     } catch {
       setError('Unable to connect. Please check your internet connection and try again.');
-    } finally {
       setIsLoading(false);
     }
   };

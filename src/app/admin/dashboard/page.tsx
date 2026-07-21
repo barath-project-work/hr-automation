@@ -4,7 +4,7 @@ import { getSupabaseServerClient } from '@/lib/supabase';
 import { StatsCards } from '@/components/hr/StatsCards';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { formatDate } from '@/lib/utils';
+import { formatDate, getGreeting } from '@/lib/utils';
 
 // Server Component — fetches real data on every request
 export default async function AdminDashboard() {
@@ -93,7 +93,7 @@ export default async function AdminDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Welcome back, Admin!</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{getGreeting()}, Admin!</h1>
           <p className="text-sm text-gray-500 mt-1">
             {new Date().toLocaleDateString('en-US', {
               weekday: 'long',

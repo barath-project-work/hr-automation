@@ -1,5 +1,5 @@
 import { createBrowserClient, createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl     = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -26,6 +26,7 @@ export function getSupabaseBrowserClient() {
 // ─────────────────────────────────────────────────────────────
 
 export async function getSupabaseServerClient() {
+  const { cookies } = await import('next/headers');
   const cookieStore = await cookies();
 
   return createServerClient(supabaseUrl, supabaseAnonKey, {
@@ -54,12 +55,16 @@ export async function getSupabaseServerClient() {
 // Used for: creating/deleting auth users, admin operations
 // ─────────────────────────────────────────────────────────────
 
-export function getSupabaseAdminClient() {
-  const { createClient } = require('@supabase/supabase-js');
-  return createClient(supabaseUrl, serviceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
+let adminClientInstance: SupabaseClient | null = null;
+
+export function getSupabaseAdminClient(): SupabaseClient {
+  if (!adminClientInstance) {
+    adminClientInstance = createClient(supabaseUrl, serviceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+  }
+  return adminClientInstance;
 }

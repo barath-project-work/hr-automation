@@ -19,9 +19,10 @@ interface SidebarProps {
   userRole: 'admin' | 'hr';
   userAvatar?: string | null;
   onSignOut: () => void;
+  onProfileClick?: () => void;
 }
 
-export function Sidebar({ items, userName, userRole, userAvatar, onSignOut }: SidebarProps) {
+export function Sidebar({ items, userName, userRole, userAvatar, onSignOut, onProfileClick }: SidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -107,10 +108,16 @@ export function Sidebar({ items, userName, userRole, userAvatar, onSignOut }: Si
           'border-t border-gray-100 p-3',
           collapsed && 'lg:p-2'
         )}>
-          <div className={cn(
-            'flex items-center gap-3 px-3 py-2.5 rounded-xl',
-            collapsed && 'lg:justify-center lg:px-0'
-          )}>
+          <div
+            onClick={onProfileClick}
+            className={cn(
+              'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all cursor-pointer hover:bg-gray-100/80 active:scale-[0.98]',
+              collapsed && 'lg:justify-center lg:px-0'
+            )}
+            title="View Profile Details"
+            role="button"
+            tabIndex={0}
+          >
             <Avatar name={userName} size="sm" src={userAvatar} />
             <div className={cn(
               'flex-1 min-w-0 transition-all duration-300',

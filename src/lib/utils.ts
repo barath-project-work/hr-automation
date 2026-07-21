@@ -24,6 +24,14 @@ export function formatTime(time: string): string {
   return `${h12}:${minutes} ${ampm}`;
 }
 
+/** Get dynamic greeting based on time of day (Morning, Afternoon, Evening) */
+export function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
 /** Format a datetime string to relative time (e.g., "2 hours ago") */
 export function timeAgo(date: string | Date): string {
   const now = new Date();

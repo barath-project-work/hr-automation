@@ -1,5 +1,6 @@
 'use server';
 
+import { cache } from 'react';
 import type {
   ApiResponse,
   Profile,
@@ -93,7 +94,7 @@ export async function signOut(): Promise<ApiResponse> {
 /**
  * Get the currently signed-in user's full profile.
  */
-export async function getCurrentUser(): Promise<ApiResponse<Profile>> {
+export const getCurrentUser = cache(async (): Promise<ApiResponse<Profile>> => {
   const supabase = await getSupabaseServerClient();
 
   const {
@@ -125,7 +126,7 @@ export async function getCurrentUser(): Promise<ApiResponse<Profile>> {
       role: roleName,
     } as Profile,
   };
-}
+});
 
 // ─────────────────────────────────────────────────────────────
 // HR MANAGEMENT (Admin only — uses admin client)

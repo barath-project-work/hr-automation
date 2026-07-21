@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TopBar } from '@/components/layout/TopBar';
 import { useAuth, useToast } from '@/providers';
-import { signOut } from '@/lib/auth';
-
 import { RequestAccessModal } from '@/components/auth/RequestAccessModal';
+import { ProfileModal } from '@/components/shared/ProfileModal';
 
 const hrNavItems = [
   {
@@ -68,6 +67,7 @@ export default function HRLayout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [requestModalOpen, setRequestModalOpen] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
   const { addToast } = useToast();
   const { user } = useAuth();
   const router = useRouter();
@@ -100,7 +100,8 @@ export default function HRLayout({
   }, [router]);
 
   const handleSignOut = useCallback(async () => {
-    await signOut();
+    const { signOut: serverSignOut } = await import('@/lib/auth');
+    await serverSignOut();
     addToast({ message: 'Signed out successfully.', type: 'success' });
     router.push('/sign-in');
   }, [addToast, router]);
@@ -116,6 +117,7 @@ export default function HRLayout({
         userRole="hr"
         userAvatar={avatarUrl}
         onSignOut={handleSignOut}
+        onProfileClick={() => setProfileModalOpen(true)}
       />
       <div className={`transition-all duration-300 ${sidebarOpen ? 'lg:pl-[260px]' : 'lg:pl-[72px]'}`}>
         <TopBar
@@ -129,6 +131,7 @@ export default function HRLayout({
             setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, is_read: true } : n));
           }}
           onRequestPasswordReset={() => setRequestModalOpen(true)}
+          onProfileClick={() => setProfileModalOpen(true)}
         />
         <main className="p-4 lg:p-6">{children}</main>
       </div>
@@ -137,6 +140,12 @@ export default function HRLayout({
         isOpen={requestModalOpen}
         onClose={() => setRequestModalOpen(false)}
         initialUsername={user?.username ?? ''}
+      />
+
+      <ProfileModal
+        isOpen={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
+        user={user}
       />
     </div>
   );

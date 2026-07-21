@@ -61,42 +61,69 @@ export function RequestList({ requests: initialRequests }: RequestListProps) {
 
   const handleApproveSubmit = async () => {
     if (!approveModal) return;
-    setIsProcessing(approveModal.id);
+    const targetId = approveModal.id;
+    const targetUsername = approveModal.username;
+    
+    // Save previous state for rollback
+    const previousRequests = [...requests];
+
+    // Optimistic UI update
+    setRequests((prev) =>
+      prev.map((r) => (r.id === targetId ? { ...r, status: 'approved' } : r))
+    );
+    setApproveModal(null);
+    setIsProcessing(targetId);
 
     try {
-      const res = await fetch(`/api/admin/requests/${approveModal.id}/approve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newPassword }),
-      });
-      const json = await res.json();
+      const result = await approveRequest(targetId, newPassword);
 
-      if (json.success) {
+      if (result.success) {
         addToast({
-          message: json.message ?? `Password reset approved for ${approveModal.username}.`,
+          message: result.message ?? `Password reset approved for ${targetUsername}.`,
           type: 'success',
         });
-        setRequests((prev) =>
-          prev.map((r) => (r.id === approveModal.id ? { ...r, status: 'approved' } : r))
-        );
-        setApproveModal(null);
       } else {
-        addToast({ message: json.error ?? 'Failed to approve request.', type: 'error' });
+        // Rollback on error
+        setRequests(previousRequests);
+        addToast({ message: result.error ?? 'Failed to approve request.', type: 'error' });
       }
     } catch {
+      setRequests(previousRequests);
       addToast({ message: 'Failed to approve request.', type: 'error' });
     } finally {
       setIsProcessing(null);
+      setNewPassword('');
     }
   };
 
   const handleReject = async () => {
     if (!rejectModal) return;
-    setIsProcessing(rejectModal.id);
+    const targetId = rejectModal.id;
+    const targetReason = rejectionReason;
+
+    // Save previous state for rollback
+    const previousRequests = [...requests];
+
+    // Optimistic UI update
+    setRequests((prev) =>
+      prev.map((r) => (r.id === targetId ? { ...r, status: 'rejected', rejection_reason: targetReason } : r))
+    );
+    setRejectModal(null);
+    setRejectionReason('');
+    setIsProcessing(targetId);
+
     try {
-      await rejectRequest(rejectModal.id, rejectionReason);
-      setRejectModal(null);
-      setRejectionReason('');
+      const result = await rejectRequest(targetId, targetReason);
+
+      if (result.success) {
+        addToast({ message: result.message ?? 'Request rejected.', type: 'success' });
+      } else {
+        setRequests(previousRequests);
+        addToast({ message: result.error ?? 'Failed to reject request.', type: 'error' });
+      }
+    } catch {
+      setRequests(previousRequests);
+      addToast({ message: 'Failed to reject request.', type: 'error' });
     } finally {
       setIsProcessing(null);
     }

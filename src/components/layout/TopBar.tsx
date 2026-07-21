@@ -23,9 +23,10 @@ interface TopBarProps {
   onMenuToggle: () => void;
   onMarkRead?: (id: string) => void;
   onRequestPasswordReset?: () => void;
+  onProfileClick?: () => void;
 }
 
-export function TopBar({ userName, userRole, userAvatar, notifications, onMenuToggle, onMarkRead, onRequestPasswordReset }: TopBarProps) {
+export function TopBar({ userName, userRole, userAvatar, notifications, onMenuToggle, onMarkRead, onRequestPasswordReset, onProfileClick }: TopBarProps) {
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const unreadCount = notifications.filter((n) => !n.is_read).length;
@@ -146,17 +147,25 @@ export function TopBar({ userName, userRole, userAvatar, notifications, onMenuTo
             )}
           </div>
 
-          {/* User info (desktop) */}
-          <div className="hidden sm:flex items-center gap-3 pl-2 border-l border-gray-200">
-            <Avatar name={userName} size="sm" src={userAvatar} />
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-gray-900 leading-tight">{userName}</span>
-              <span className="text-[10px] text-gray-500 uppercase tracking-wider">{userRole}</span>
+          {/* User info (responsive) */}
+          <div className="flex items-center gap-2 sm:gap-3 pl-2 border-l border-gray-200">
+            <div
+              onClick={onProfileClick}
+              className="flex items-center gap-2 sm:gap-2.5 p-1 sm:p-1.5 rounded-xl hover:bg-gray-100/80 transition-all cursor-pointer active:scale-[0.98]"
+              title="View Profile Details"
+              role="button"
+              tabIndex={0}
+            >
+              <Avatar name={userName} size="sm" src={userAvatar} />
+              <div className="hidden sm:flex flex-col text-left">
+                <span className="text-sm font-medium text-gray-900 leading-tight">{userName}</span>
+                <span className="text-[10px] text-gray-500 uppercase tracking-wider">{userRole}</span>
+              </div>
             </div>
             {userRole === 'hr' && onRequestPasswordReset && (
               <button
                 onClick={onRequestPasswordReset}
-                className="ml-2 px-2.5 py-1 text-xs font-medium text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                className="hidden md:inline-flex ml-1 px-2.5 py-1 text-xs font-medium text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                 title="Request password reset from Admin"
               >
                 Reset Password

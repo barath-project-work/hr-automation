@@ -5,7 +5,7 @@ import { getSupabaseServerClient } from '@/lib/supabase';
 import { StatsCards } from '@/components/hr/StatsCards';
 import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
-import { formatTime } from '@/lib/utils';
+import { formatTime, getGreeting } from '@/lib/utils';
 
 // Server Component — fetches real data on every request
 export default async function HRDashboard() {
@@ -119,7 +119,7 @@ export default async function HRDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Good morning, {firstName}!</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{getGreeting()}, {firstName}!</h1>
           <p className="text-sm text-gray-500 mt-1">
             {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>

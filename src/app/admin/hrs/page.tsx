@@ -6,6 +6,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { resetHRPassword, toggleHRActive, deleteHR } from '@/lib/auth';
 import { generatePassword, getPasswordStrengthInfo, checkPasswordStrength } from '@/lib/utils';
 import { useToast } from '@/providers';
@@ -21,6 +22,12 @@ export default function HRListPage() {
   const [newPassword, setNewPassword] = useState('');
   const [isResetting, setIsResetting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const [toggleModal, setToggleModal] = useState<{ id: string; name: string; currentStatus: boolean } | null>(null);
+  const [isToggling, setIsToggling] = useState(false);
+
+  const [deleteModal, setDeleteModal] = useState<{ id: string; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // ── Fetch real HR list from Supabase ────────────────────────
   useEffect(() => {
@@ -43,29 +50,50 @@ export default function HRListPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Toggle active status ─────────────────────────────────────
-  const handleToggleActive = async (id: string) => {
-    const result = await toggleHRActive(id);
-    if (result.success) {
-      setHRs((prev) =>
-        prev.map((hr) =>
-          hr.id === id ? { ...hr, is_active: result.data!.is_active } : hr
-        )
-      );
-      addToast({ message: result.message ?? 'Status updated.', type: 'success' });
-    } else {
-      addToast({ message: result.error ?? 'Failed to update status.', type: 'error' });
+  // ── Toggle active status (after user confirms in modal) ──────
+  const handleConfirmToggle = async () => {
+    if (!toggleModal) return;
+    setIsToggling(true);
+    try {
+      const result = await toggleHRActive(toggleModal.id);
+      if (result.success) {
+        setHRs((prev) =>
+          prev.map((hr) =>
+            hr.id === toggleModal.id ? { ...hr, is_active: result.data!.is_active } : hr
+          )
+        );
+        addToast({
+          message: result.message ?? `Account ${result.data!.is_active ? 'activated' : 'deactivated'}.`,
+          type: 'success',
+        });
+        setToggleModal(null);
+      } else {
+        addToast({ message: result.error ?? 'Failed to update status.', type: 'error' });
+      }
+    } catch {
+      addToast({ message: 'Failed to update status.', type: 'error' });
+    } finally {
+      setIsToggling(false);
     }
   };
 
-  // ── Delete HR ────────────────────────────────────────────────
-  const handleDelete = async (id: string) => {
-    const result = await deleteHR(id);
-    if (result.success) {
-      setHRs((prev) => prev.filter((hr) => hr.id !== id));
-      addToast({ message: result.message ?? 'HR account removed.', type: 'success' });
-    } else {
-      addToast({ message: result.error ?? 'Failed to remove HR.', type: 'error' });
+  // ── Delete HR (after user confirms in modal) ─────────────────
+  const handleConfirmDelete = async () => {
+    if (!deleteModal) return;
+    setIsDeleting(true);
+    try {
+      const result = await deleteHR(deleteModal.id);
+      if (result.success) {
+        setHRs((prev) => prev.filter((hr) => hr.id !== deleteModal.id));
+        addToast({ message: result.message ?? 'HR account removed.', type: 'success' });
+        setDeleteModal(null);
+      } else {
+        addToast({ message: result.error ?? 'Failed to remove HR.', type: 'error' });
+      }
+    } catch {
+      addToast({ message: 'Failed to remove HR.', type: 'error' });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -117,13 +145,47 @@ export default function HRListPage() {
 
       <HRTable
         hrs={hrs}
-        onToggleActive={handleToggleActive}
+        onToggleActive={(id, name, is_active) => {
+          setToggleModal({ id, name, currentStatus: is_active });
+        }}
         onResetPassword={(id, name) => {
           setResetModal({ id, name });
           setNewPassword(generatePassword());
           setShowPassword(true);
         }}
-        onDelete={handleDelete}
+        onDelete={(id, name) => {
+          setDeleteModal({ id, name });
+        }}
+      />
+
+      {/* Confirmation Modal for Active / Inactive Status Toggle */}
+      <ConfirmDialog
+        isOpen={!!toggleModal}
+        onClose={() => setToggleModal(null)}
+        onConfirm={handleConfirmToggle}
+        title={toggleModal?.currentStatus ? 'Deactivate HR Account' : 'Activate HR Account'}
+        message={
+          toggleModal?.currentStatus
+            ? `Are you sure you want to deactivate ${toggleModal?.name}'s account? They will temporarily lose access to the HR portal.`
+            : `Are you sure you want to activate ${toggleModal?.name}'s account? They will regain access to the HR portal.`
+        }
+        confirmLabel={toggleModal?.currentStatus ? 'Deactivate Account' : 'Activate Account'}
+        cancelLabel="Cancel"
+        variant={toggleModal?.currentStatus ? 'danger' : 'default'}
+        isLoading={isToggling}
+      />
+
+      {/* Confirmation Modal for Account Deletion */}
+      <ConfirmDialog
+        isOpen={!!deleteModal}
+        onClose={() => setDeleteModal(null)}
+        onConfirm={handleConfirmDelete}
+        title={`Delete HR Account — ${deleteModal?.name || ''}`}
+        message={`Are you sure you want to permanently delete ${deleteModal?.name}'s account? This action cannot be undone.`}
+        confirmLabel="Delete Account"
+        cancelLabel="Cancel"
+        variant="danger"
+        isLoading={isDeleting}
       />
 
       {/* Reset Password Modal */}
