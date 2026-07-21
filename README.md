@@ -6,14 +6,13 @@
 ---
 
 ## 📋 Table of Contents
-- [Project Overview](#-project-overview)
-- [Accomplished Milestones (Phase 1)](#-accomplished-milestones-phase-1)
-- [System Architecture & Tech Stack](#-system-architecture--tech-stack)
-- [Database Schema & Migrations](#-database-schema--migrations)
-- [Project Directory Structure](#-project-directory-structure)
-- [Key Workflows Implemented](#-key-workflows-implemented)
-- [Getting Started & Local Setup](#-getting-started--local-setup)
-- [Next Steps & Roadmap (Phase 2)](#-next-steps--roadmap-phase-2)
+- [Project Overview](#project-overview)
+- [Accomplished Milestones (Phase 1)](#accomplished-milestones-phase-1)
+- [System Architecture & Tech Stack](#system-architecture--tech-stack)
+- [Database Schema Overview](#database-schema-overview)
+- [Project Directory Structure](#project-directory-structure)
+- [Getting Started & Local Setup](#getting-started--local-setup)
+- [Next Steps & Roadmap (Phase 2)](#next-steps--roadmap-phase-2)
 
 ---
 
@@ -38,7 +37,7 @@ The **Rivomind HR Automation Platform** is a full-stack, enterprise-grade Web Ap
 - **Access Request Flow:** Guests can request access or password resets via an interactive modal; Admins can review, approve, or reject requests.
 
 ### 2. 🛡️ Admin Management Portal
-- **HR Account Management:** Full CRUD interfaces to add new HR members, edit user details, toggle account activation status, and reset passwords (`/admin/hrs`).
+- **HR Account Management:** Full CRUD interfaces to add new HR members, edit user details, toggle account activation status (with confirmation modal), and reset passwords (`/admin/hrs`).
 - **Access Requests Management:** Real-time request dashboard (`/admin/requests`) for approving/rejecting account registration and password reset tickets.
 - **Admin Dashboard:** High-level metrics tracking active HR users, pending requests, and system health (`/admin/dashboard`).
 
@@ -77,7 +76,7 @@ The **Rivomind HR Automation Platform** is a full-stack, enterprise-grade Web Ap
 
 ### 9. 🎨 Modern UI Design System
 - **Tailwind CSS v4 Integration:** Modern dark/light UI palette, responsive layouts, subtle micro-animations, and glassmorphism styling.
-- **Reusable Component Library:** Modular UI primitives (`Button`, `Card`, `Modal`, `Select`, `Input`, `Badge`, `Avatar`, `Spinner`, `Pagination`, `ConfirmDialog`, `EmptyState`, `ErrorBoundary`, `StatusTimeline`).
+- **Reusable Component Library:** Modular UI primitives (`Button`, `Card`, `Modal`, `Select`, `Input`, `Badge`, `Avatar`, `Spinner`, `Pagination`, `ConfirmDialog`, `ProfileModal`, `EmptyState`, `ErrorBoundary`, `StatusTimeline`).
 
 ### 10. 📚 Comprehensive Architecture Documentation
 - Created **11 in-depth technical documents** in `/docs` covering SRS specifications, database design, RBAC matrices, state machine definitions, Google Workspace integration architecture, and page routing maps.
@@ -158,7 +157,7 @@ hr-automation-frontend-share/
 │   │   ├── auth/                # Sign-in form & request access modal
 │   │   ├── hr/                  # Applicant tables, cards, interview modals
 │   │   ├── layout/              # Sidebar & TopBar navigation headers
-│   │   ├── shared/              # Status timeline, confirm dialogs, pagination
+│   │   ├── shared/              # Status timeline, confirm dialogs, pagination, profile modal
 │   │   └── ui/                  # Atom UI library (Buttons, Modals, Cards, Inputs)
 │   ├── lib/
 │   │   ├── auth.ts              # Authentication helpers & session utilities
