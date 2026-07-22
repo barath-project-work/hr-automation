@@ -1,9 +1,9 @@
 import { createBrowserClient, createServerClient } from '@supabase/ssr';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl     = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const serviceRoleKey  = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 // ─────────────────────────────────────────────────────────────
 // Browser Client (for Client Components)
@@ -51,7 +51,7 @@ export async function getSupabaseServerClient() {
 // ─────────────────────────────────────────────────────────────
 // Admin Client (for privileged Server Actions only)
 // Uses the service_role key — BYPASSES RLS
-// ⚠️  NEVER import this in client components
+// NEVER import this in client components
 // Used for: creating/deleting auth users, admin operations
 // ─────────────────────────────────────────────────────────────
 

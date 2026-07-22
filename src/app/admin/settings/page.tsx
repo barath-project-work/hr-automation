@@ -89,10 +89,11 @@ export default function AdminSettingsPage() {
                 <label className="block text-sm font-medium text-gray-700">Profile Photo (JPG / PNG)</label>
                 <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-2xl border border-gray-200">
                   <Avatar name={formData.full_name || 'Admin'} size="lg" src={formData.avatar_url} />
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 space-y-2">
                     <input
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
+                      disabled={isLoading}
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (!file) return;
@@ -105,9 +106,7 @@ export default function AdminSettingsPage() {
                           const json = await res.json();
                           if (json.success && json.avatar_url) {
                             setFormData((prev) => ({ ...prev, avatar_url: json.avatar_url }));
-                            if (user) {
-                              setUser({ ...user, avatar_url: json.avatar_url });
-                            }
+                            if (user) setUser({ ...user, avatar_url: json.avatar_url });
                             addToast({ message: 'Profile picture uploaded successfully!', type: 'success' });
                           } else {
                             addToast({ message: json.error || 'Failed to upload photo.', type: 'error' });
@@ -120,7 +119,41 @@ export default function AdminSettingsPage() {
                       }}
                       className="text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-gray-900 file:text-white hover:file:bg-gray-800 cursor-pointer"
                     />
-                    <p className="text-[11px] text-gray-400 mt-1">Upload a JPG, PNG, or WebP photo for Admin (Max 5MB)</p>
+                    <p className="text-[11px] text-gray-400">Upload a JPG, PNG, or WebP photo (Max 5MB)</p>
+                    {formData.avatar_url && (
+                      <button
+                        type="button"
+                        disabled={isLoading}
+                        onClick={async () => {
+                          setIsLoading(true);
+                          try {
+                            const res = await fetch('/api/upload/avatar', {
+                              method: 'DELETE',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: user ? JSON.stringify({ userId: user.id }) : undefined,
+                            });
+                            const json = await res.json();
+                            if (json.success) {
+                              setFormData((prev) => ({ ...prev, avatar_url: '' }));
+                              if (user) setUser({ ...user, avatar_url: null });
+                              addToast({ message: 'Profile picture removed.', type: 'success' });
+                            } else {
+                              addToast({ message: json.error || 'Failed to remove photo.', type: 'error' });
+                            }
+                          } catch {
+                            addToast({ message: 'Failed to remove profile photo.', type: 'error' });
+                          } finally {
+                            setIsLoading(false);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 text-xs text-red-600 hover:text-red-700 font-medium transition-colors disabled:opacity-50"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Remove photo
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

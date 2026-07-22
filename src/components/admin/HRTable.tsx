@@ -12,6 +12,7 @@ interface HR {
   email?: string | null;
   username: string;
   phone: string;
+  avatar_url?: string | null;
   is_active: boolean;
   created_at: string;
 }
@@ -90,7 +91,7 @@ export function HRTable({ hrs, onToggleActive, onResetPassword, onDelete }: HRTa
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <Avatar name={hr.full_name} size="sm" />
+                      <Avatar name={hr.full_name} size="sm" src={hr.avatar_url} />
                       <div>
                         <span className="text-sm font-medium text-gray-900 block">{hr.full_name}</span>
                         {hr.email && <span className="text-xs text-gray-500 block">{hr.email}</span>}

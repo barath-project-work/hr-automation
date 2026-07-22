@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient, getSupabaseAdminClient } from '@/lib/supabase';
 
-// POST /api/upload/avatar — Upload a direct profile picture (JPG/PNG/WebP)
+// POST /api/upload/avatar — Upload a profile picture to Supabase Storage
 export async function POST(request: NextRequest) {
   try {
     const supabase = await getSupabaseServerClient();
@@ -30,54 +30,39 @@ export async function POST(request: NextRequest) {
 
     const adminClient = getSupabaseAdminClient();
     const arrayBuffer = await file.arrayBuffer();
-    let avatarUrl = '';
 
-    // Convert to Data URL (Base64) as reliable primary/fallback format so uploads work instantly
-    const base64 = Buffer.from(arrayBuffer).toString('base64');
-    const dataUrl = `data:${file.type};base64,${base64}`;
+    // Use a stable path per user so re-uploads overwrite the old file
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const filePath = `avatars/${targetUserId}.${ext}`;
 
-    try {
-      const ext = file.name.split('.').pop() || 'jpg';
-      const filePath = `avatars/${targetUserId}_${Date.now()}.${ext}`;
+    // Upload to Supabase Storage (avatars bucket)
+    const { error: uploadError } = await adminClient.storage
+      .from('avatars')
+      .upload(filePath, arrayBuffer, {
+        contentType: file.type,
+        upsert: true, // overwrite existing avatar for this user
+      });
 
-      let bucketName = 'avatars';
-      let { error: uploadError } = await adminClient.storage
-        .from(bucketName)
-        .upload(filePath, arrayBuffer, {
-          contentType: file.type,
-          upsert: true,
-        });
-
-      if (uploadError && (uploadError.message.includes('not found') || uploadError.message.includes('Bucket'))) {
-        bucketName = 'documents';
-        const fallbackResult = await adminClient.storage
-          .from(bucketName)
-          .upload(filePath, arrayBuffer, {
-            contentType: file.type,
-            upsert: true,
-          });
-        uploadError = fallbackResult.error;
-      }
-
-      if (!uploadError) {
-        const { data: publicUrlData } = adminClient.storage
-          .from(bucketName)
-          .getPublicUrl(filePath);
-
-        if (publicUrlData?.publicUrl) {
-          avatarUrl = publicUrlData.publicUrl;
-        }
-      }
-    } catch {
-      // Storage upload error — fallback to dataUrl
+    if (uploadError) {
+      console.error('Storage upload error:', uploadError);
+      return NextResponse.json(
+        { success: false, error: `Storage upload failed: ${uploadError.message}. Make sure the "avatars" bucket exists in Supabase Storage.` },
+        { status: 500 }
+      );
     }
 
-    // Use dataUrl if storage URL wasn't generated
+    // Get the public URL for the uploaded file
+    const { data: publicUrlData } = adminClient.storage
+      .from('avatars')
+      .getPublicUrl(filePath);
+
+    const avatarUrl = publicUrlData?.publicUrl;
+
     if (!avatarUrl) {
-      avatarUrl = dataUrl;
+      return NextResponse.json({ success: false, error: 'Failed to retrieve public URL after upload.' }, { status: 500 });
     }
 
-    // Update profile table in Supabase
+    // Update the profile row in the database
     const { error: dbError } = await adminClient
       .from('profiles')
       .update({ avatar_url: avatarUrl, updated_at: new Date().toISOString() })
@@ -85,12 +70,6 @@ export async function POST(request: NextRequest) {
 
     if (dbError) {
       console.error('Database error updating avatar_url:', dbError);
-      if (dbError.message.includes('avatar_url')) {
-        return NextResponse.json({
-          success: false,
-          error: 'Missing avatar_url column in database. Please run migration 004_add_avatar_url_to_profiles.sql in Supabase SQL Editor.',
-        }, { status: 400 });
-      }
       return NextResponse.json({ success: false, error: dbError.message }, { status: 500 });
     }
 
@@ -101,6 +80,53 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     console.error('POST /api/upload/avatar error:', err);
+    return NextResponse.json({ success: false, error: 'Internal server error.' }, { status: 500 });
+  }
+}
+
+// DELETE /api/upload/avatar — Remove a profile picture and clear avatar_url in DB
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = await getSupabaseServerClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ success: false, error: 'Not authenticated.' }, { status: 401 });
+    }
+
+    // Allow an admin to delete another user's avatar by passing userId in the body
+    let targetUserId = user.id;
+    try {
+      const body = await request.json();
+      if (body?.userId) targetUserId = body.userId;
+    } catch {
+      // no body provided — default to current user
+    }
+
+    const adminClient = getSupabaseAdminClient();
+
+    // Attempt to remove all common extension variants from storage (silently ignore misses)
+    const extensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+    const pathsToRemove = extensions.map((ext) => `avatars/${targetUserId}.${ext}`);
+    await adminClient.storage.from('avatars').remove(pathsToRemove);
+
+    // Clear avatar_url in the profiles table
+    const { error: dbError } = await adminClient
+      .from('profiles')
+      .update({ avatar_url: null, updated_at: new Date().toISOString() })
+      .eq('id', targetUserId);
+
+    if (dbError) {
+      console.error('Database error clearing avatar_url:', dbError);
+      return NextResponse.json({ success: false, error: dbError.message }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Profile picture removed successfully.',
+    });
+  } catch (err) {
+    console.error('DELETE /api/upload/avatar error:', err);
     return NextResponse.json({ success: false, error: 'Internal server error.' }, { status: 500 });
   }
 }
